@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Social QR Codes</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(to bottom, #faf9f7 0%, #ffffff 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: #2d2d2d;
+        }
+
+        .container {
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #525252 0%, #d97706 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 2px;
+        }
+
+        .header p {
+            font-size: 14px;
+            color: #737373;
+        }
+
+        .menu-view {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .qr-button {
+            background: #ffffff;
+            border: 2px solid rgba(217, 119, 6, 0.1);
+            border-radius: 16px;
+            padding: 20px;
+            color: #2d2d2d;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            text-align: left;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            position: relative;
+        }
+
+        .qr-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #d97706, #f59e0b);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            border-radius: 16px 16px 0 0;
+        }
+
+        .qr-button:hover::before {
+            opacity: 1;
+        }
+
+        .qr-button:active {
+            transform: scale(0.98);
+        }
+
+        .qr-button:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 12px 35px rgba(217, 119, 6, 0.15);
+            border-color: #d97706;
+        }
+
+        .qr-button .icon {
+            font-size: 24px;
+            margin-right: 15px;
+        }
+
+        .qr-button .content {
+            flex: 1;
+        }
+
+        .qr-button .subtitle {
+            font-size: 14px;
+            font-weight: 400;
+            color: #737373;
+            margin-top: 4px;
+        }
+
+        .qr-button .arrow {
+            font-size: 20px;
+            color: #d97706;
+            transition: transform 0.3s ease;
+        }
+
+        .qr-button:hover .arrow {
+            transform: translateX(4px);
+        }
+
+        .qr-view {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to bottom, #faf9f7 0%, #ffffff 100%);
+            padding: 20px;
+            z-index: 1000;
+        }
+
+        .qr-view.active {
+            display: flex;
+        }
+
+        .qr-header {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .qr-header h2 {
+            font-size: 24px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #525252 0%, #d97706 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .qr-header p {
+            font-size: 14px;
+            color: #737373;
+        }
+
+        .qr-container {
+            background: white;
+            padding: 30px;
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            margin-bottom: 30px;
+        }
+
+        .qr-code {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .back-button {
+            background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);
+            border: none;
+            border-radius: 12px;
+            padding: 15px 40px;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(217, 119, 6, 0.25);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .back-button:active {
+            transform: scale(0.95);
+        }
+
+        .back-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 30px rgba(217, 119, 6, 0.4);
+            background: linear-gradient(135deg, #c05605 0%, #d97706 100%);
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .qr-button {
+                padding: 18px;
+                font-size: 16px;
+            }
+
+            .qr-container {
+                padding: 20px;
+            }
+        }
+
+        /* Prevent text selection */
+        .qr-button, .back-button {
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Menu View -->
+        <div class="menu-view" id="menuView">
+            <div class="header">
+                <h1>YOUR NAME</h1>
+                <p>Scan a QR code to connect</p>
+            </div>
+
+            <button class="qr-button" onclick="showQR('tiktok')">
+                <div style="display: flex; align-items: center; flex: 1;">
+                    <div class="icon">🎵</div>
+                    <div class="content">
+                        <div>TikTok</div>
+                        <div class="subtitle">@yourusername</div>
+                    </div>
+                </div>
+                <div class="arrow">→</div>
+            </button>
+
+            <button class="qr-button" onclick="showQR('youtube')">
+                <div style="display: flex; align-items: center; flex: 1;">
+                    <div class="icon">📺</div>
+                    <div class="content">
+                        <div>YouTube</div>
+                        <div class="subtitle">@YourChannel</div>
+                    </div>
+                </div>
+                <div class="arrow">→</div>
+            </button>
+
+            <button class="qr-button" onclick="showQR('instagram')">
+                <div style="display: flex; align-items: center; flex: 1;">
+                    <div class="icon">📷</div>
+                    <div class="content">
+                        <div>Instagram</div>
+                        <div class="subtitle">@yourusername</div>
+                    </div>
+                </div>
+                <div class="arrow">→</div>
+            </button>
+
+            <button class="qr-button" onclick="showQR('contact')">
+                <div style="display: flex; align-items: center; flex: 1;">
+                    <div class="icon">👤</div>
+                    <div class="content">
+                        <div>Save Contact</div>
+                        <div class="subtitle">Add me to your phone</div>
+                    </div>
+                </div>
+                <div class="arrow">→</div>
+            </button>
+        </div>
+
+        <!-- QR Code Views -->
+        <div class="qr-view" id="qrView">
+            <div class="qr-header">
+                <h2 id="qrTitle">Scan QR Code</h2>
+                <p id="qrSubtitle">Point your camera at the code</p>
+            </div>
+            <div class="qr-container">
+                <div class="qr-code" id="qrCode"></div>
+            </div>
+            <button class="back-button" onclick="hideQR()">← Back to Menu</button>
+        </div>
+    </div>
+
+    <!-- QR Code Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <script>
+        // ============================================
+        // CONFIGURATION - UPDATE THESE VALUES
+        // ============================================
+
+        const CONFIG = {
+            // Your display name
+            name: 'YOUR NAME',
+
+            // Social Media URLs
+            tiktok: 'https://www.tiktok.com/@yourusername',
+            youtube: 'https://www.youtube.com/@YourChannel',
+            instagram: 'https://www.instagram.com/yourusername',
+
+            // Contact Information for vCard
+            contact: {
+                fullName: 'Your Full Name',
+                phone: '+1234567890',  // Include country code
+                email: 'your.email@example.com',
+                company: 'Your Company',  // Optional
+                jobTitle: 'Your Job Title',  // Optional
+                website: 'https://yourwebsite.com',  // Optional
+                howWeMet: 'Met at networking event'  // Custom note
+            }
+        };
+
+        // ============================================
+        // QR CODE DATA - DO NOT EDIT UNLESS CUSTOMIZING
+        // ============================================
+
+        let currentQRCode = null;
+
+        const qrData = {
+            tiktok: {
+                title: 'TikTok',
+                subtitle: 'Follow on TikTok',
+                url: CONFIG.tiktok
+            },
+            youtube: {
+                title: 'YouTube',
+                subtitle: 'Subscribe on YouTube',
+                url: CONFIG.youtube
+            },
+            instagram: {
+                title: 'Instagram',
+                subtitle: 'Follow on Instagram',
+                url: CONFIG.instagram
+            },
+            contact: {
+                title: 'Save Contact',
+                subtitle: 'Add to your contacts',
+                url: generateVCard()
+            }
+        };
+
+        function generateVCard() {
+            // Generate vCard 3.0 format for contact information
+            const c = CONFIG.contact;
+            const vcard = [
+                'BEGIN:VCARD',
+                'VERSION:3.0',
+                `FN:${c.fullName}`,
+                `N:${c.fullName.split(' ').pop()};${c.fullName.split(' ')[0]};;;`,
+                c.phone ? `TEL;TYPE=CELL:${c.phone}` : '',
+                c.email ? `EMAIL:${c.email}` : '',
+                c.company ? `ORG:${c.company}` : '',
+                c.jobTitle ? `TITLE:${c.jobTitle}` : '',
+                c.website ? `URL:${c.website}` : '',
+                c.howWeMet ? `NOTE:${c.howWeMet}` : '',
+                'END:VCARD'
+            ].filter(line => line).join('\n');  // Filter out empty lines
+
+            return vcard;
+        }
+
+        function showQR(type) {
+            const data = qrData[type];
+            const qrContainer = document.getElementById('qrCode');
+            const qrView = document.getElementById('qrView');
+
+            // Update title and subtitle
+            document.getElementById('qrTitle').textContent = data.title;
+            document.getElementById('qrSubtitle').textContent = data.subtitle;
+
+            // Clear previous QR code
+            qrContainer.innerHTML = '';
+
+            // Generate new QR code
+            const qrSize = Math.min(window.innerWidth - 100, 300);
+            currentQRCode = new QRCode(qrContainer, {
+                text: data.url,
+                width: qrSize,
+                height: qrSize,
+                colorDark: '#000000',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.H
+            });
+
+            // Show QR view
+            document.getElementById('menuView').style.display = 'none';
+            qrView.classList.add('active');
+
+            // Boost screen brightness (request)
+            if ('wakeLock' in navigator) {
+                navigator.wakeLock.request('screen').catch(err => {
+                    console.log('Wake lock error:', err);
+                });
+            }
+        }
+
+        function hideQR() {
+            document.getElementById('qrView').classList.remove('active');
+            document.getElementById('menuView').style.display = 'flex';
+            currentQRCode = null;
+        }
+
+        // Prevent accidental navigation
+        window.addEventListener('beforeunload', function (e) {
+            if (document.getElementById('qrView').classList.contains('active')) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+
+        // Handle back button on mobile
+        window.addEventListener('popstate', function(e) {
+            if (document.getElementById('qrView').classList.contains('active')) {
+                e.preventDefault();
+                hideQR();
+            }
+        });
+    </script>
+</body>
+</html>
