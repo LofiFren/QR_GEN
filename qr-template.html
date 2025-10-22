@@ -330,23 +330,95 @@
         // QR CODE DATA - DO NOT EDIT UNLESS CUSTOMIZING
         // ============================================
 
+        function normalizeAtHandleUrl(url) {
+            if (!url) return url;
+
+            try {
+                const parsedUrl = new URL(url);
+                const segments = parsedUrl.pathname.split('/').map(segment => {
+                    if (segment.startsWith('@')) {
+                        const username = segment.slice(1);
+                        return `@${username.toLowerCase()}`;
+                    }
+                    return segment;
+                });
+                parsedUrl.pathname = segments.join('/');
+                return parsedUrl.toString();
+            } catch (err) {
+                const atIndex = url.indexOf('@');
+                if (atIndex === -1) {
+                    return url;
+                }
+
+                const prefix = url.slice(0, atIndex + 1);
+                const suffix = url.slice(atIndex + 1);
+                const boundaryIndex = suffix.search(/[/?#]/);
+
+                if (boundaryIndex === -1) {
+                    return prefix + suffix.toLowerCase();
+                }
+
+                const username = suffix.slice(0, boundaryIndex).toLowerCase();
+                return prefix + username + suffix.slice(boundaryIndex);
+            }
+        }
+
+        function normalizeInstagramUrl(url) {
+            if (!url) return url;
+
+            try {
+                const parsedUrl = new URL(url);
+                const segments = parsedUrl.pathname.split('/');
+                const firstNonEmptyIndex = segments.findIndex(segment => segment);
+
+                if (firstNonEmptyIndex !== -1) {
+                    segments[firstNonEmptyIndex] = segments[firstNonEmptyIndex].toLowerCase();
+                    parsedUrl.pathname = segments.join('/');
+                }
+
+                return parsedUrl.toString();
+            } catch (err) {
+                const schemeIndex = url.indexOf('://');
+                const pathStart = schemeIndex !== -1 ? url.indexOf('/', schemeIndex + 3) : url.indexOf('/');
+
+                if (pathStart === -1) {
+                    return url;
+                }
+
+                const beforePath = url.slice(0, pathStart);
+                const afterPath = url.slice(pathStart);
+                const suffixIndex = afterPath.search(/[?#]/);
+                const pathOnly = suffixIndex === -1 ? afterPath : afterPath.slice(0, suffixIndex);
+                const suffix = suffixIndex === -1 ? '' : afterPath.slice(suffixIndex);
+                const segments = pathOnly.split('/');
+                const firstNonEmptyIndex = segments.findIndex(segment => segment);
+
+                if (firstNonEmptyIndex === -1) {
+                    return url;
+                }
+
+                segments[firstNonEmptyIndex] = segments[firstNonEmptyIndex].toLowerCase();
+                return beforePath + segments.join('/') + suffix;
+            }
+        }
+
         let currentQRCode = null;
 
         const qrData = {
             tiktok: {
                 title: 'TikTok',
                 subtitle: 'Follow on TikTok',
-                url: CONFIG.tiktok
+                url: normalizeAtHandleUrl(CONFIG.tiktok)
             },
             youtube: {
                 title: 'YouTube',
                 subtitle: 'Subscribe on YouTube',
-                url: CONFIG.youtube
+                url: normalizeAtHandleUrl(CONFIG.youtube)
             },
             instagram: {
                 title: 'Instagram',
                 subtitle: 'Follow on Instagram',
-                url: CONFIG.instagram
+                url: normalizeInstagramUrl(CONFIG.instagram)
             },
             contact: {
                 title: 'Save Contact',
